@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kampo Co. · Business setup, branding, websites, marketing and systems · Mombasa, Kenya</title>
+  <meta name="description" content="Kampo Co. is a creative studio in Mombasa, Kenya: brand identity and creative direction, websites and digital presence, and tailor-made ERP systems for growing businesses." />
+  <meta name="theme-color" content="#efede7" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Kampo Co." />
+  <meta property="og:title" content="Kampo Co. · Brands, websites and systems · Mombasa, Kenya" />
+  <meta property="og:description" content="We set up, brand and build businesses. All in one place. Tell us what you need and get a free written quote." />
+  <meta property="og:image" content="images/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Fraunces:ital,opsz,wght@0,9..144,200..900;1,9..144,200..900&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/site.min.css" />
+</head>
+<body>
+  <!-- paper texture over everything -->
+  <div class="grain" aria-hidden="true"></div>
+  <!-- paper: fibres, uneven tone, fold crease, edge vignette -->
+  <div class="paper" aria-hidden="true"></div>
+  <!-- letterpress ink: roughens the edges of display type -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="ink" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="n" />
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </svg>
+
+  <!-- persistent top sidebar -->
+  <header class="topbar">
+    <a href="#/" class="topbar__logo" data-link></a>
+    <span class="topbar__meta mono" id="topbar-meta"></span>
+    <nav class="topbar__nav mono">
+      <a href="#/" data-link>Index</a>
+      <a href="#/services" data-link>Services</a>
+      <a href="#/about" data-link>About</a>
+      <a href="#/contact" data-link>Contact</a>
+    </nav>
+    <a class="topbar__cta" href="#/services" data-cta>Start a project</a>
+    <button class="menu-btn mono" id="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button>
+  </header>
+
+  <!-- WebGL layer that draws all [data-gl] images -->
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <main id="page" class="page"></main>
+
+  <!-- persistent bottom sidebar -->
+  <footer class="bottombar mono" id="bottombar"></footer>
+
+  <!-- torn-paper menu -->
+  <div class="menu" id="menu" aria-hidden="true">
+    <div class="menu__inner">
+      <p class="mono menu__kicker">Contents</p>
+      <nav class="menu__nav">
+        <a href="#/" data-link><span class="mono">p.01</span>Index</a>
+        <a href="#/services" data-link><span class="mono">p.02</span>Services</a>
+        <a href="#/about" data-link><span class="mono">p.03</span>About</a>
+        <a href="#/contact" data-link><span class="mono">p.04</span>Contact</a>
+      </nav>
+      <div class="menu__socials mono" id="menu-socials"></div>
+    </div>
+  </div>
+
+  <!-- torn-paper page transition sheet -->
+  <div class="sheet" id="sheet" aria-hidden="true">
+    <div class="sheet__title" id="sheet-title"></div>
+  </div>
+
+  <!-- page turn: the old page is lifted as a leaf and flipped over -->
+  <div class="turn" id="turn" aria-hidden="true"><div class="turn__shadow" id="turn-shadow"></div></div>
+  <button class="dogear" id="dogear" aria-label="Turn the page">
+    <span class="dogear__fold"></span>
+    <span class="dogear__label mono">Turn the page<b id="dogear-next"></b></span>
+  </button>
+
+  <!-- living ink frame around the screen; the right edge is also a menu tab -->
+  <canvas id="edges" class="edges" aria-hidden="true"></canvas>
+  <button class="edge-tab" id="edge-tab" aria-label="Open menu" tabindex="-1"></button>
+
+  <!-- custom cursor -->
+  <div class="cursor" id="cursor"><span id="cursor-label"></span></div>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/ScrollTrigger.min.js"></script>
+  <script src="vendor/lenis.min.js"></script>
+  <script src="js/data.js"></script>
+  <!-- the site itself, built from js/*.js by tools/build.mjs -->
+  <script src="js/site.min.js"></script>
+</body>
+</html>

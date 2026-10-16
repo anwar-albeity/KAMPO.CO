@@ -1,0 +1,4 @@
+/* Licensed display fonts (see fonts/README.txt). Link this file from index.html once the .woff2 files are in /fonts. */
+@font-face { font-family: 'Kampo Display'; src: url('../fonts/display.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Kampo Display'; src: url('../fonts/display-italic.woff2') format('woff2'); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Kampo Editorial'; src: url('../fonts/editorial.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
