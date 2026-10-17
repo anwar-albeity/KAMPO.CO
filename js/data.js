@@ -46,12 +46,12 @@ window.SITE = {
   // front page intro under the headline
   // the questions people ask before getting in touch; every answer stands on its own in one or two short lines
   faq: [
-    ['How much will it cost?', 'It depends on the size of the job. Tell us what you need and we send you a free written quote. Nothing starts until you agree to it.'],
-    ['How long will it take?', 'That depends on the job too. Your written quote sets out the dates before you say yes.'],
-    ['Can I get just one thing?', 'Yes. Pick one service or several, from any area. Every job is quoted on its own.'],
-    ['I am not sure what I need.', 'That is fine. Book the free twenty-minute meeting and we will tell you what to do first, and what can wait.'],
-    ['Do you only work in Mombasa?', 'No. We work with clients in Kenya, across Africa and abroad, on WhatsApp, email and video calls.'],
-    ['What do I need to start?', 'Just your idea. Tell us what you sell and who buys it, and we will help with the rest.'],
+    ['How much will it cost?', 'It depends on the job. Tell us what you need for a free written quote. Nothing starts until you agree.'],
+    ['How long will it take?', 'Your written quote sets the dates before you say yes.'],
+    ['Can I get just one thing?', 'Yes. Pick one service or several, from any area.'],
+    ['I am not sure what I need.', 'Book the free twenty-minute meeting. We will say what to do first, and what can wait.'],
+    ['Do you only work in Mombasa?', 'No. We work across Kenya, Africa and abroad, on WhatsApp, email and video.'],
+    ['What do I need to start?', 'Just your idea. Tell us what you sell and who buys it. We help with the rest.'],
   ],
   personLine: 'Designer, developer and auditor from Mombasa. He builds your business, and checks the numbers twice.',
   standfirst:

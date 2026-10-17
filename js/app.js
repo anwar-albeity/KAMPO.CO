@@ -1437,6 +1437,126 @@
 
   // About: no sheets, no slides. The page is laid out like a printed profile; scrolling only lets things drift.
   // Words float up once into place; the name, the photo, the notes and the big glyphs move at their own pace.
+  // About on a phone: the portrait plays inside two soft shapes held at the screen's edges while the credits are
+  // read; past the last line they drift in and become one. The shapes keep breathing so they never look cut out.
+  function abMobile() {
+    const sec = $('.abm', page);
+    if (!matchMedia('(max-width: 760px)').matches) return () => {};
+    const L = $('.abm__blob--l', sec), R = $('.abm__blob--r', sec), info = $('.abm__info', sec), imgs = $$('.abm__blob img', sec);
+    const frames = (sec.dataset.frames || '').split(',').filter(Boolean), fps = +sec.dataset.fps || 8, tot = String(frames.length).padStart(2, '0');
+    frames.forEach((f) => { new Image().src = f; });
+    const num = $('.abm__n', sec), bar = $('.abm__bar i', sec), btns = $$('[data-abm]', sec), cap = $('.abm__t', sec), titles = (sec.dataset.titles || '').split('|');
+    let playing = !reduce && frames.length > 1, fi = 0, acc = 0, last = performance.now(), time = 0, p = 0, goal = 0, raf = 0, on = false;
+    // one number runs it all: 1 is the photo whole in the middle, 0 is the two halves held at the edges.
+    // It starts whole (the hero), parts as the reading begins and comes back together after the last line.
+    let split = 0, join = 0, born = performance.now();
+    const goalOf = () => { goal = Math.max(1 - split, join); };
+    const st = ScrollTrigger.create({ trigger: $('.abm__end', sec), start: 'top 35%', end: 'bottom bottom', onUpdate: (s) => { join = s.progress; goalOf(); } });
+    const sh = ScrollTrigger.create({ trigger: $('.abm__hero', sec), start: 'top top', end: 'bottom 60%', onUpdate: (s) => { split = s.progress; goalOf(); } });
+    goalOf();
+    const cl = (v) => Math.min(1, Math.max(0, v)), ease = (v) => v * v * (3 - 2 * v), mix = (a, b, v) => a + (b - a) * v, f1 = (v) => v.toFixed(1);
+    // a closed smooth outline through points around an ellipse, each radius nudged by a few slow waves
+    const shape = (w, h, seed) => {
+      const N = 9, pts = [];
+      for (let k = 0; k < N; k++) {
+        const a = (k / N) * Math.PI * 2, r = 0.82 * (1 + 0.1 * Math.sin(a * 2 + seed + time * 0.7) + 0.07 * Math.sin(a * 3 - seed * 1.7 + time * 0.45) + 0.045 * Math.sin(a * 5 + seed * 2.3 - time * 0.9));
+        pts.push([w / 2 + Math.cos(a) * (w / 2) * r, h / 2 + Math.sin(a) * (h / 2) * r]);
+      }
+      let d = `M${f1(pts[0][0])},${f1(pts[0][1])}`;
+      for (let k = 0; k < N; k++) {
+        const a = pts[(k + N - 1) % N], b = pts[k], c = pts[(k + 1) % N], e = pts[(k + 2) % N];
+        d += `C${f1(b[0] + (c[0] - a[0]) / 6)},${f1(b[1] + (c[1] - a[1]) / 6)} ${f1(c[0] - (e[0] - b[0]) / 6)},${f1(c[1] - (e[1] - b[1]) / 6)} ${f1(c[0])},${f1(c[1])}`;
+      }
+      return `path('${d}Z')`;
+    };
+    // each half carries its own half of the photo: the picture inside is sized and slid so the two bubbles
+    // show the left and the right of the same face; the picture holds one size while they close in, so the two
+    // halves line up into the whole photo as they meet
+    const place = (el, cx, cy, w, h, rot, seed, fx, a, b) => {
+      el.style.width = f1(w) + 'px'; el.style.height = f1(h) + 'px';
+      const iw = Math.max(w, mix(innerWidth * 0.63, innerWidth * 0.87, a)), ih = Math.max(h, iw * 4 / 3), im = el.firstElementChild;
+      im.style.width = f1(iw) + 'px'; im.style.height = f1(ih) + 'px';
+      im.style.transform = `translate(${f1(w / 2 - mix(fx, 0.5, b) * iw)}px, ${f1(h / 2 - 0.47 * ih)}px)`;
+      el.style.transform = `translate(${f1(cx - w / 2)}px, ${f1(cy - h / 2)}px) rotate(${f1(rot)}deg)`;
+      el.style.clipPath = shape(w, h, seed);
+    };
+    const paint = () => {
+      const W = innerWidth, H = innerHeight, a = ease(cl(p / 0.5)), b = ease(cl((p - 0.5) / 0.5));
+      const w = mix(W * 0.3, W * 0.8, b), h = mix(Math.min(H * 0.46, W * 0.64), Math.min(H * 0.5, W * 1.02), b);
+      place(L, mix(mix(W * 0.01, W * 0.3, a), W * 0.5, b), mix(H * 0.47, H * 0.4, a), w, h, mix(9, 0, a), 0.3, 0.27, a, b);
+      place(R, mix(mix(W * 0.99, W * 0.7, a), W * 0.5, b), H * 0.4, w, h, mix(-11, 0, a), 2.1, 0.73, a, b);
+      info.style.opacity = join > 0 ? cl((p - 0.55) / 0.3).toFixed(2) : 0;
+    };
+    const show = () => { num.textContent = `${String(fi + 1).padStart(2, '0')} / ${tot}`; if (cap) cap.textContent = titles[fi] || ''; bar.style.transform = `scaleX(${frames.length > 1 ? fi / (frames.length - 1) : 1})`; };
+    const loop = (now) => {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (!reduce) time += dt;
+      p += (goal - p) * (reduce ? 1 : Math.min(1, dt * Math.min(7, 0.9 + (now - born) / 400)));
+      if (playing) { acc += dt; if (acc >= 1 / fps) { acc = 0; fi = (fi + 1) % frames.length; imgs.forEach((im) => (im.src = frames[fi])); show(); } }
+      paint();
+      raf = on ? requestAnimationFrame(loop) : 0;
+    };
+    const io = new IntersectionObserver(([en]) => { on = en.isIntersecting; if (on && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); } });
+    io.observe(sec);
+    const press = () => btns.forEach((x) => x.setAttribute('aria-pressed', String((x.dataset.abm === 'play') === playing)));
+    const click = (e) => { const x = e.target.closest('[data-abm]'); if (!x) return; playing = x.dataset.abm === 'play' && frames.length > 1; press(); };
+    sec.addEventListener('click', click); press(); show(); paint();
+    return () => { io.disconnect(); cancelAnimationFrame(raf); on = false; st.kill(); sh.kill(); sec.removeEventListener('click', click); };
+  }
+
+  // Services on a phone: one service to a screen. Scrolling sends the card in the middle up to the pile in the
+  // top corner and deals the next one in from the bottom corner; the counter and the words blur across on the
+  // same number, so picture and words always arrive together.
+  function svcDeck() {
+    const sec = $('.dk', page);
+    if (!matchMedia('(max-width: 760px)').matches) return () => {};
+    const cards = $$('.dk__card', sec), texts = $$('.dk__t', sec), no = $('.dk__no', sec), n = cards.length;
+    const cl = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), mix = (a, b, v) => a + (b - a) * v, ease = (v) => v * v * (3 - 2 * v), f1 = (v) => v.toFixed(1);
+    const at = { v: 0 }; let goal = 0, shown = -1, raf = 0, on = false, last = performance.now();
+    const paint = () => {
+      const W = innerWidth, H = innerHeight, cur = at.v;
+      const mid = [W * 0.5, H * 0.38, -1.5, 1], pile = [W * 0.86, H * 0.08, 7, 0.62], next = [W * 0.1, H * 0.99, -10, 0.72];
+      cards.forEach((c, k) => {
+        const d = k - cur, ad = Math.abs(d), to = d < 0 ? pile : next, e = ease(cl(ad)), w = c.offsetWidth, h = c.offsetHeight;
+        let [x, y, r, sc] = mid.map((m, i) => mix(m, to[i], e));
+        const deep = cl(ad - 1, 0, 3);
+        if (d < 0) { x += deep * 6; y -= deep * 4; r += deep * 3; }
+        c.style.transform = `translate(${f1(x - w / 2)}px, ${f1(y - h / 2)}px) rotate(${f1(r)}deg) scale(${sc.toFixed(3)})`;
+        c.style.opacity = d > 1.2 || d < -3.2 ? 0 : 1;
+        c.style.zIndex = ad < 0.5 ? 100 : d < 0 ? Math.round(60 + d * 5) : Math.round(40 - d * 5);
+      });
+      // the words leave in the first third of the swap and the new ones settle in the last third
+      texts.forEach((t, k) => {
+        const ad = Math.abs(k - cur), o = cl(1 - ad * 3);
+        t.style.opacity = o.toFixed(3);
+        t.style.filter = o > 0.99 ? 'none' : `blur(${f1((1 - o) * 8)}px)`;
+        t.style.transform = o > 0.99 ? 'none' : `translateY(${f1((k - cur) * 14)}px)`;
+      });
+      const i = Math.round(cl(cur, 0, n - 1));
+      if (i !== shown) {
+        shown = i; no.textContent = String(i + 1).padStart(2, '0');
+        if (!reduce) gsap.fromTo(no, { filter: 'blur(6px)', opacity: 0.35 }, { filter: 'blur(0px)', opacity: 1, duration: 0.4, ease: 'power2.out', clearProps: 'filter' });
+        texts.forEach((t, k) => { const live = k === i; t.classList.toggle('is-on', live); t.setAttribute('aria-hidden', String(!live)); const a = $('a', t); if (a) a.tabIndex = live ? 0 : -1; });
+      }
+    };
+    // the deck follows the finger, then settles on the nearest service
+    const st = ScrollTrigger.create({ trigger: sec, start: 'top top', end: 'bottom bottom', onUpdate: (q) => { goal = q.progress * (n - 1); },
+      snap: reduce ? false : { snapTo: 1 / (n - 1), duration: { min: 0.25, max: 0.6 }, delay: 0.08, ease: 'power2.inOut' } });
+    const loop = (now) => {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      at.v += (goal - at.v) * (reduce ? 1 : Math.min(1, dt * 10));
+      if (Math.abs(goal - at.v) < 0.0005) at.v = goal;
+      paint();
+      raf = on ? requestAnimationFrame(loop) : 0;
+    };
+    const io = new IntersectionObserver(([en]) => { on = en.isIntersecting; if (on && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); } });
+    io.observe(sec);
+    const imgs = $$('img', sec); imgs.forEach((im) => { if (!im.complete) im.addEventListener('load', paint, { once: true }); });
+    paint();
+    addEventListener('resize', paint);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); on = false; st.kill(); removeEventListener('resize', paint); };
+  }
+
   function bioPage() {
     const kills = [];
     $$('[data-float]', page).forEach((el) => kills.push(gsap.fromTo(el, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 1.3, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 90%', once: true } })));
@@ -1565,7 +1685,7 @@
     // it rises and its edges open as you scroll, tied to the scroll so it never jumps. Headings rise out of
     // a fold; smaller blocks ink in, sharpening from a soft blur. No bounces, no flips.
     const sheets = $$(':scope > :is(.freecheck, .toon, .carousel, .sectors, .process, .story, .quotes, .brief, .cta, .case, .pj-gallery, .pj-next, .about-block, .grid, section)', page)
-      .filter((el) => !el.matches('.cover, .statement, .journey, .street, .bio, .offers, .masthead, .hero, .brief.is-flow, .spread') && !el.closest('.cover, .spread'));
+      .filter((el) => !el.matches('.abm, .dk, .cover, .statement, .journey, .street, .bio, .offers, .masthead, .hero, .brief.is-flow, .spread') && !el.closest('.cover, .spread'));
     if (!reduce) sheets.forEach((el) => {
       gsap.fromTo(el, { y: 110, clipPath: 'inset(9% 3.5% 0% 3.5%)' }, { y: 0, clipPath: 'inset(-12% -3% -3% -3%)', ease: 'none',
         scrollTrigger: { trigger: el, start: 'top bottom', end: 'top 45%', scrub: 0.5 } });
@@ -1634,12 +1754,16 @@
     if ($('.shelf', page)) cleanups.push(shelf());
     if ($('.toon', page)) cleanups.push(toon());
     if ($('.phone', page)) cleanups.push(phone());
-    if ($('.journey', page)) cleanups.push(journey());
-    if ($('.street', page)) cleanups.push(streetScene());
-    if ($('.jr', page) && !reduce) cleanups.push(svcFloat());
-    if ($('.svc-end', page)) cleanups.push(svcNight());
+    // on a phone the Services showcase is read as credits instead, so its scenes stay asleep
+    const shown = (sel) => { const el = $(sel, page); return !!el && el.getClientRects().length > 0; };
+    if (shown('.journey')) cleanups.push(journey());
+    if (shown('.street')) cleanups.push(streetScene());
+    if (shown('.jr') && !reduce) cleanups.push(svcFloat());
+    if (shown('.svc-end')) cleanups.push(svcNight());
     if ($('.ct', page)) cleanups.push(contactPage());
     if ($('.bio', page) && !reduce) cleanups.push(bioPage());
+    if ($('.abm', page)) cleanups.push(abMobile());
+    if ($('.dk', page)) cleanups.push(svcDeck());
     // About: the story inks in as you read, the pull quote is drawn across, the CV rows open as they arrive,
     // and the one thing you tap (the lens) nudges until it is used
     $$('.pullquote', page).forEach((el) => { if (!reduce) gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', ease: 'none', scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 50%', scrub: 0.4 } }); });

@@ -14,6 +14,27 @@
     return `<div class="media ${cls}"><img data-gl src="${esc(f[0])}" data-frames="${esc(f.join(','))}" data-fps="${p.fps || 8}" alt="Portrait of ${esc(S.name)}"></div>`;
   }
   const yrOf = (t) => (String(t || '').match(/\d{4}/) || [''])[0];
+  // phone only: a quiet credits column read over pictures held in two soft bubbles at the screen's edges. The
+  // pictures play like footage; the bubbles start whole in the middle, part as the reading begins and come
+  // back together after the last line. frames: image paths; titles (optional): a caption for each frame.
+  const credit = (k, v) => `<p><b>${k}:</b> ${v}</p>`;
+  const bubbles = ({ cls = '', label, frames, fps = 8, titles = [], hero, body, info }) => {
+    const fr = frames.filter(Boolean), n = String(fr.length).padStart(2, '0');
+    const blob = (sd) => `<div class="abm__blob abm__blob--${sd}"><img src="${esc(fr[0] || '')}" alt=""></div>`;
+    return `
+      <section class="abm ${cls}" aria-label="${esc(label)}" data-frames="${esc(fr.join(','))}" data-fps="${fps}"${titles.length ? ` data-titles="${esc(titles.join('|'))}"` : ''}>
+        <div class="abm__stage" aria-hidden="true">${blob('l')}${blob('r')}</div>
+        <div class="abm__text">
+          <header class="abm__hero">${hero}</header>
+          ${body}
+        </div>
+        <div class="abm__end"><div class="abm__info">${info}</div></div>
+        <div class="abm__ctrl" aria-label="Pictures">
+          <i class="abm__bar"><i></i></i>
+          <p><span class="abm__n">01 / ${n}</span>${titles.length ? `<span class="abm__t">${esc(titles[0])}</span>` : ''}<button type="button" data-abm="play" aria-pressed="true">Play</button><button type="button" data-abm="pause" aria-pressed="false">Pause</button></p>
+        </div>
+      </section>`;
+  };
   const img = (src, alt, extra = '') => `<div class="media"><img data-gl ${extra} src="${esc(src)}" alt="${esc(alt)}" loading="eager"></div>`;
 
   const stamp = (text) => `
@@ -83,11 +104,10 @@
           <div class="cap__side">
             <p class="cap__kick mono">0${n} / Custom Package</p>
             <h2 class="cap__title">Build your own <em>package.</em></h2>
-            <p class="cap__tag">Tick what you need. We quote it as one.</p>
-            <p class="cap__text">Mix services from any area into one package, sized for your business. Pick as many or as few as you like.</p>
+            <p class="cap__tag">Tick what you need, from any area. We quote it as one package.</p>
             <p class="own__sum"><span class="mono">Your package</span><b data-own-n>0</b> <span data-own-w>services</span></p>
             <button type="button" class="btn" data-own-go><span>Get my package quoted</span><i aria-hidden="true"></i></button>
-            <p class="own__alt">Something not on the list? <button type="button" data-build="custom">Tell us about it</button>.</p>
+            <p class="own__alt">Not listed? <button type="button" data-build="custom">Tell us about it</button>.</p>
           </div>
           <div class="own__list">${O.pillars.map((p, i) => `
             <fieldset class="own__grp"><legend class="mono">0${i + 1} · ${esc(p.label)}</legend>${p.services.map(([t]) => `<label class="pkg__opt"><input type="checkbox" value="${esc(t)}"><span>${esc(t)}</span></label>`).join('')}</fieldset>`).join('')}
@@ -951,30 +971,56 @@
       const O = S.offer;
       // how a job runs: four phases, each with what happens in it
       const J = [
-        ['Talk', 'A free call to understand your business and what you need.', ['Your goals and customers', 'What you have already', 'The scope, agreed together']],
-        ['Quote', 'One written price for the whole job. Nothing starts until you say yes.', ['A written quote', 'A timeline you agree to', 'No surprise costs later']],
-        ['Build', 'We design and build in stages and share the work as it grows.', ['Design and build', 'Previews to review', 'Changes while it is easy']],
-        ['Launch', 'We go live and hand everything over in your name.', ['Go live and testing', 'Every file, login and password', 'Training for your team']],
+        ['Talk', 'A free call about your business.', ['Goals and customers', 'What you already have', 'Scope, agreed together']],
+        ['Quote', 'One written price. Nothing starts until you say yes.', ['Written quote', 'Agreed timeline', 'No surprise costs']],
+        ['Build', 'Built in stages, shared as it grows.', ['Design and build', 'Previews to review', 'Early changes']],
+        ['Launch', 'Live, tested and handed over in your name.', ['Testing and go live', 'Every file and login', 'Team training']],
       ];
       // why us: four plain promises, each backed by how we work
       const Y = [
-        ['Everything in one place', 'One team from registration to brand, website and systems.', ['One point of contact', 'Nothing lost between suppliers', 'Every part made to fit']],
-        ['Built, not templated', 'Sites and systems made for your business, not bought off a shelf.', ['Hand coded websites', 'Systems shaped to how you work', 'Fast on any phone']],
-        ['Numbers checked twice', 'Run by a trained auditor, so tax and invoicing are done right.', ['KRA and eTIMS ready', 'Clear written quotes', 'Reports you can read']],
-        ['Yours to keep', 'When we finish, everything is handed over in your name.', ['Your domain and accounts', 'All files and logins', 'Help after launch if you want it']],
+        ['Everything in one place', 'One team from registration to systems.', ['One contact', 'No gaps between suppliers', 'Every part fits']],
+        ['Built, not templated', 'Made for your business, not off a shelf.', ['Hand coded sites', 'Systems shaped to you', 'Fast on any phone']],
+        ['Numbers checked twice', 'Run by an auditor, so tax and invoicing are right.', ['KRA and eTIMS ready', 'Clear written quotes', 'Readable reports']],
+        ['Yours to keep', 'Everything handed over in your name.', ['Domain and accounts', 'All files and logins', 'Help after launch']],
       ];
       // the hero is the stick-figure journey; then the same figure walks the street and builds each service
       const hero = journey()
         .replace('<section class="journey"', '<section class="journey svc-hero"')
         .replace('<div class="journey__stage">', `<div class="journey__stage"><header class="svc-hero__head"><p class="cap__crumb mono">/ Services</p><h1 class="svc-hero__title">What we <em>do.</em></h1></header>`)
         .replace('href="#what" data-scroll-to="what"', 'href="#street" data-scroll-to="street" data-label="The six things we do"');
+      // phone only: one service to a screen. A big counter, a picture card in the middle and the words under it;
+      // each scroll sends the card up to the pile in the corner and deals the next one in from below
+      const shotOf = { brand: ['images/poster-hero.webp', '1920 / 880'], web: ['images/rb-perfumes-hero.webp', '1920 / 880'], software: ['images/erp-hero.webp', '1920 / 880'], creative: ['images/poster-1.webp', '1600 / 1100'] };
+      const N = String(O.pillars.length).padStart(2, '0');
+      const deck = `
+      <section class="dk" aria-label="Services" style="--n:${O.pillars.length}">
+        <div class="dk__stage">
+          <p class="dk__kick"><b>Services</b><span>${esc(S.studio)}</span></p>
+          <p class="dk__count" aria-hidden="true"><span class="dk__no">01</span><sup>/${N}</sup></p>
+          <div class="dk__cards" aria-hidden="true">${O.pillars.map((p, i) => `
+            <figure class="dk__card${shotOf[p.key] ? '' : ' dk__card--ink'}"${shotOf[p.key] ? ` style="aspect-ratio:${shotOf[p.key][1]}"` : ''}>${shotOf[p.key]
+              ? `<img src="${esc(shotOf[p.key][0])}" alt="" loading="eager">`
+              : `<span class="dk__ink"><b>${esc(p.name)}</b></span>`}</figure>`).join('')}
+          </div>
+          <div class="dk__texts">${O.pillars.map((p, i) => `
+            <article class="dk__t" id="dk-${p.key}"${i ? ' aria-hidden="true"' : ''}>
+              <p class="dk__cat">${esc(p.kind)}</p>
+              <h2 class="dk__h">${esc(p.title)}</h2>
+              <p class="dk__l">${esc(p.line)}</p>
+              <p class="dk__s">${p.services.map(([x]) => esc(x)).join(' · ')}</p>
+              <a class="dk__go" href="#brief" data-grp-go="${p.key}"${i ? ' tabindex="-1"' : ''}>Get a quote →</a>
+            </article>`).join('')}
+          </div>
+        </div>
+      </section>`;
       return `
+${deck}
 ${hero}
 ${street()}
       <section class="spread flat own-sec" id="own" aria-label="Build your own package">${brief('brief', own())}</section>
 
       <section class="spread flat jr" aria-label="Our project journey">
-        <header class="jr__head"><p class="cap__kick mono">0${O.pillars.length + 2} / The process</p><h2 class="cap__big jr__big">${lines(['Our project', '<em>journey.</em>'])}</h2><p class="jr__deck">Four steps, the same for every job. You always know what comes next.</p></header>
+        <header class="jr__head"><p class="cap__kick mono">0${O.pillars.length + 2} / The process</p><h2 class="cap__big jr__big">${lines(['Our project', '<em>journey.</em>'])}</h2><p class="jr__deck">Four steps, every job. You always know what is next.</p></header>
         <div class="jr__route">
           <svg class="jr__road" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true"><path class="jr__path" d="M20 70 C140 20 220 110 340 66 S560 22 670 70 S880 112 980 54" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-dasharray="2 12" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
           <ol class="jr__steps" role="list">${J.map(([t, d, list], k) => `
@@ -990,7 +1036,7 @@ ${street()}
       </section>
 
       <section class="spread flat why" aria-label="Why ${esc(S.studio)}">
-        <header class="why__head"><p class="cap__kick mono">0${O.pillars.length + 3} / Why choose us</p><h2 class="cap__big why__big">${lines(['Why', '<em>' + esc(S.studio) + '?</em>'])}</h2><p class="why__deck">Four promises behind every job, big or small.</p></header>
+        <header class="why__head"><p class="cap__kick mono">0${O.pillars.length + 3} / Why choose us</p><h2 class="cap__big why__big">${lines(['Why', '<em>' + esc(S.studio) + '?</em>'])}</h2><p class="why__deck">Four promises on every job.</p></header>
         <ol class="why__list" role="list">${Y.map(([t, d, list], k) => `
           <li class="why__row" data-k="${k}">
             <p class="why__l" aria-hidden="true">${'ABCD'[k]}</p>
@@ -1004,7 +1050,7 @@ ${street()}
       <section class="spread flat svc-end" aria-label="Start a project">
         <p class="cap__kick mono">Ready when you are</p>
         <h2 class="svc-end__title">${lines(['Let’s build it,', '<em>together.</em>'])}</h2>
-        <p class="svc-end__deck">A new business, a rebrand or a system to replace the spreadsheets. Tell us what you need and get a free written quote.</p>
+        <p class="svc-end__deck">A new business, a rebrand or a system to replace spreadsheets. Get a free written quote.</p>
         <div class="svc-end__acts"><a class="btn svc-end__go" href="#brief" data-build="mix"><span>Start a project</span><i aria-hidden="true"></i></a><a class="btn btn--ghost svc-end__wa" href="${esc(waLink())}" target="_blank" rel="noopener"><span>Chat on WhatsApp</span><i aria-hidden="true"></i></a></div>
         <p class="svc-end__mail mono">Prefer email? <a href="mailto:${esc(S.email)}">${esc(S.email)}</a></p>
       </section>
@@ -1095,7 +1141,34 @@ ${street()}
         ['±', 'Auditor', 'Controls, reports and numbers that add up.', sk('numbers')],
       ];
       const yr = (t) => esc(String(t).replace(/ to /, '–'));
-      return `
+      const cr = credit;
+      const mob = bubbles({ label: 'Profile', frames: pic.frames || [], fps: pic.fps || 8,
+        hero: `<h1 class="abm__name"><span>${esc(name)}</span><span>${esc(S.location)}</span></h1><hr>
+            <p>Designer, developer and auditor. Founder of ${esc(S.studio)}${/\.$/.test(S.studio) ? '' : '.'}</p><hr>`,
+        body: `<p class="abm__k">Profile</p>
+          ${cr('Based', esc(S.location))}
+          ${study.map((x) => cr(/CPA/.test(x.role) ? 'Qualifying' : 'Studied', `${esc(x.role)}, ${esc(x.place)}`)).join('')}
+          ${job ? cr('By day', `${esc(job.role)}, ${esc(job.place)}`) : ''}
+          ${cr('Founded', `${esc(S.studio)}, ${esc(yrOf(jobs[0] && jobs[0].years))}`)}
+          <hr>
+          <p>${esc(C.lede || '')}</p>
+          ${st.paragraphs.map((t) => `<p>${rich(t)}</p>`).join('')}
+          <p>“${esc(st.pullquote)}”<br>${esc(st.signoff || '')}</p>
+          <hr>
+          <p class="abm__k">Crafts</p>
+          ${crafts.map(([, t, , items]) => cr(t, items.map(esc).join(', '))).join('')}
+          <hr>
+          <p class="abm__k">Education</p>
+          ${study.map((x) => cr(yr(x.years), `${esc(x.role)}, ${esc(x.place)}`)).join('')}
+          <p class="abm__k">Certificates</p>
+          ${certs.map((c) => `<p>${esc(c.name)}, ${esc(c.note).toLowerCase()}</p>`).join('')}
+          <p class="abm__k">Experience</p>
+          ${jobs.map((j) => `${cr(yr(j.years), `${esc(j.role)}, ${esc(j.place)}`)}${j.work ? `<p><a href="#/work/${j.work}">See the system it became →</a></p>` : ''}`).join('')}
+          <hr>`,
+        info: `<p><span>${esc(name)}</span><span>${esc(S.location)}</span></p><hr>
+            <p>Design, development, audit</p><hr>
+            <p><a href="#/contact">Work with ${esc(first)} →</a></p>` });
+      return `${mob}
       <section class="bio ab-front" aria-label="Profile">
         <header class="ab-flag">
           <p class="ab-flag__row mono"><span>Vol. 01 · Page 3</span><span>${esc(today)}</span><span>${esc(S.location)}</span></p>
